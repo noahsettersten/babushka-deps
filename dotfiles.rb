@@ -7,7 +7,7 @@ meta 'dotfiles' do
       "~/.#{target}".p.exists?
     }
     meet {
-      log_shell "Cloning", "git clone https://github.com/jondkinney/#{repo}.git ~/.#{target}"
+      log_shell "Cloning", "git clone https://github.com/noahsettersten/#{repo}.git ~/.#{target}"
       log "Symlinking"
       shellout = raw_shell("cd ~/.#{target} && chmod +x install.sh && sh install.sh").stdout
       log "#{shellout}"
