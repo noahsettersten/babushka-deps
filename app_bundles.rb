@@ -1,43 +1,34 @@
 # http://www.omnigroup.com/ftp1/pub/software/MacOSX/10.5/OmniGrafflePro-5.3.3.dmg
+# rubocop:disable Metrics/LineLength
 meta 'skip_eula_prompt' do
   accepts_value_for :app_name, :basename
   accepts_value_for :source, :source
   accepts_value_for :dmg_name
 
-  template {
-    met? {
-      "/Applications/#{app_name}".p.exist? || "/Applications/#{dmg_name.gsub(/\.dmg/,'')}".p.exist?
-    }
-    meet {
+  template do
+    met? do
+      "/Applications/#{app_name}".p.exist? ||
+        "/Applications/#{dmg_name.gsub(/\.dmg/, '')}".p.exist?
+    end
+    meet do
       log "Using Babushka's Resource.get to snatch #{app_name}"
-      Babushka::Resource.get("#{source}") do end
-      log_shell "Stripping EULA","/usr/bin/hdiutil convert -quiet ~/.babushka/downloads/#{dmg_name} -format UDTO -o ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/,'')}"
-      log_shell "Mounting and creating local folder with contents of DMG","/usr/bin/hdiutil attach -quiet -nobrowse -noverify -noautoopen -mountpoint ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/,'')} ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/,'')}.cdr"
-      if "~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/,'')}".include?("calico")
-        log_shell "Making container folder for non-standard EULA app", "sudo mkdir -p /Applications/#{dmg_name.gsub(/\.dmg/,'')}"
-        log_shell "Copying into /Applications","sudo cp -r ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/,'')}/* /Applications/#{dmg_name.gsub(/\.dmg/,'')}/", :spinner => true
-      else
-        log_shell "Copying into /Applications","sudo cp -r ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/,'')}/*.app /Applications", :spinner => true
+      Babushka::Resource.get(source.to_s) {}
+      log_shell 'Stripping EULA',
+                "/usr/bin/hdiutil convert -quiet ~/.babushka/downloads/#{dmg_name} -format UDTO -o ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/, '')}"
+      log_shell 'Mounting and creating local folder with contents of DMG',
+                "/usr/bin/hdiutil attach -quiet -nobrowse -noverify -noautoopen -mountpoint ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/, '')} ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/, '')}.cdr"
+      log_shell 'Copying into /Applications',
+                "sudo cp -r ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/, '')}/*.app /Applications", spinner: true
+
+      after do
+        log 'Detaching DMG and deleting the .cdr we created'
+        shell("/usr/bin/hdiutil detach ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/, '')}/")
+        "~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/, '')}.cdr".p.remove
       end
-
-      after {
-        log "Detaching DMG and deleting the .cdr we created"
-        shell("/usr/bin/hdiutil detach ~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/,'')}/")
-        "~/.babushka/downloads/#{dmg_name.gsub(/\.dmg/,'')}.cdr".p.remove
-      }
-    }
-  }
+    end
+  end
 end
-
-dep 'Calico.app', :template => 'skip_eula_prompt' do
-  source 'http://www.kekus.com/downloads/calico_2_2.dmg'
-  dmg_name 'calico_2_2.dmg'
-end
-
-dep 'Evernote.app', :template => 'skip_eula_prompt' do
-  source 'http://evernote.s3.amazonaws.com/mac/release/Evernote_172019.dmg'
-  dmg_name 'Evernote_172019.dmg'
-end
+# rubocop:enable Metrics/LineLength
 
 # Normal Apps
 # ----------------
@@ -51,10 +42,6 @@ end
 
 dep 'iTerm.app' do
   source 'http://iterm2.googlecode.com/files/iTerm2-beta2.zip'
-end
-
-dep 'Google Chrome.app' do
-  source 'http://dl.google.com/chrome/mac/dev/GoogleChrome.dmg'
 end
 
 dep '1Password.app' do
@@ -71,9 +58,10 @@ dep 'VirtualBox.installer' do
 end
 
 dep 'CrashPlan.installer' do
-  # requires 'JavaRuntime.installer' #NOTE: just let Lion prompt for the runtime env
+  # requires 'JavaRuntime.installer'
+  # NOTE: just let Lion prompt for the runtime env
   source 'http://download.crashplan.com/installs/mac/install/CrashPlan/CrashPlan_3.0.3_Mac.dmg'
-  met? { "/Applications/CrashPlan.app".p.exists? }
+  met? { '/Applications/CrashPlan.app'.p.exists? }
 end
 
 dep 'Cyberduck.app' do
@@ -82,8 +70,4 @@ end
 
 dep 'VLC.app' do
   source 'http://sourceforge.net/projects/vlc/files/1.1.11/macosx/vlc-1.1.11.dmg/download'
-end
-
-dep 'MacVim.app' do
-  source 'https://github.com/downloads/b4winckler/macvim/MacVim-snapshot-62.tbz'
 end
